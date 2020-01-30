@@ -183,8 +183,7 @@ ndata = numel(X); % Number of data-sets
 [acf,dA] = deal(cell(1,ndata)); % Preallocate
 [nX,varX] = deal(zeros(1,ndata));
 for nd = 1:ndata
-    % Built in function (faster)
-    [acf{nd},~,~] = autocorr(X{nd},'NumLags',tauMax); 
+    acf{nd} = myAutocorr(X{nd},tauMax);
     nX(nd) = numel(X{nd}); % Number of points
     varX(nd) = var(X{nd}); % Variance
     dA{nd} = (acf{nd}(2:end)-acf{nd}(1))*var(X{nd}); % Tidy up array
@@ -193,10 +192,28 @@ end
 %% Merge data
 dAmat = cell2mat(dA); % Make into matrix
 dA_full = (dAmat*nX')/sum(nX);
-
-% Old code
-%[acf,~,~] = autocorr(X,'NumLags',tau_max); % Built in function (faster)
-%dA = (acf(2:end)-acf(1))*var(X); % Tidy up array
+end
+function acf = myAutocorr(x,lags)
+%Autocorrelation function
+%   William Davis, 30/01/20
+%
+%   Notes:
+%   Calculate autocorrelation function.
+%   
+%   Inputs:
+%
+%   Problems:
+%   - No checks
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Demean and calculate
+xDemean = x - mean(x);
+nFFT = 2^(nextpow2(length(xDemean))+1);
+F = fft(xDemean,nFFT);
+F = F.*conj(F);
+acf = ifft(F);
+acf = acf(1:(lags+1));
+acf = real(acf);
+acf = acf./acf(1);
 end
 function [thetaStar,rNuMatrix,lambdaStar] = thetaBasisFunctionFit(dA,dt,...
     nuMax,thetaMax,betaConv)
