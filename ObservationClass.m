@@ -70,7 +70,7 @@ classdef ObservationClass
                 hold on,box on
                 plot(obj.timeStep*(1:obj.dataLength(n)),...
                     obj.dataCell{n})
-                title(['Data: observation no. ',num2str(2)])
+                title(['Data: observation no. ',num2str(n)])
                 xlabel('Time')
                 ylabel('Amplitude')
             end
