@@ -9,7 +9,7 @@ clearvars,clc,close all
 %% Make observation object
 observationDataAB = buildObservation(trueModel.dt,...
     observationVectorA,observationVectorB);
-figure,observationDataAB.plotObservation;
+figure,observationDataAB.plotObservation();
 
 %% Make moment matrices
 
