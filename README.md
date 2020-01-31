@@ -5,7 +5,7 @@ Regression of stochastic processes with exponentially correleted noise. `secn-PR
 
 To be added
 
-# Example
+# Using the code
 This example follows the script `exampleScript.m` in the `./examples/` directory. Further information on the functions/classes/options can be found in the headers of each file.
 
 ### Import some observations
@@ -112,5 +112,21 @@ legend([h.scatter,h.fill,h.model],'Best estimate',...
 The drift and noise functions and their uncertainties are plotted here with the true input functions.
 
 This workflow is streamlined in the `fullSPestimate()` function, see `exampleScript2.m` for more details.
+
+# TODOs
+
+- [ ] Implement arbitrary `timeShiftSamplePoints`
+- [ ] Implement arbitrary spatial evaluation points
+- [ ] Make a plotting function for the distribution of correlation times
+
+# Changelog
+
+- Version 0.9 - Introduced version I used for my research.
+
+# References
+
+- Lehle, B., & Peinke, J. (2018). Analyzing a stochastic process driven by Ornstein-Uhlenbeck noise. Physical Review E, 97(1), 012113.
+- Lamouroux, D., & Lehnertz, K. (2009). Kernel-based regression of drift and diffusion coefficients of stochastic processes. Physics Letters A, 373(39), 3507-3512.
+- Kunsch, H. R. (1989). The jackknife and the bootstrap for general stationary observations. The annals of Statistics, 1217-1241.
 
 
