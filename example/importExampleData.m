@@ -10,11 +10,11 @@ function [observationA,observationB,trueModel] = importExampleData
 %   Problems:
 %   - 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Ovservations
+%% Observations
 observationA = importdata('./exampleDataA.dat'); % Observation A
 observationB = importdata('./exampleDataB.dat'); % Observation B
 
-%% True prameters used in calculations
+%% True parameters used in calculations
 trueModel.dt = 0.005; % Time-step
 trueModel.theta = 0.01; % Correlation time
 trueModel.drift = @(x) -2.5*x; % Drift function
