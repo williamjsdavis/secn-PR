@@ -66,6 +66,20 @@ classdef SPbootstrapClass
             ylabel('Noise function')
             ylim([0,inf])
         end
+        function [l,h] = plotCorrelationTime(obj)
+            %%%Plot correlation time and bootstraps for visual inspection
+            % Make figure
+            hold on,box on
+            h.histogram = histogram(obj.distributions.correlationEstimate);
+            h.plot = plot(obj.SPmodel.correlationEstimate*ones(2,1),...
+                ylim,'r-','LineWidth',2);
+            title('Correlation time and bootstrap results')
+            xlabel('Correlation time')
+            ylabel('Counts')
+            xlim([0,inf])
+            l = legend([h.histogram,h.plot],'Bootstrap','Original',...
+                'Location','NorthWest');
+        end
         function [l,h] = plotMeanFitError(obj)
             %%%Plot mean absolute fit errors for bootetrap results
             % Make figure
@@ -78,7 +92,7 @@ classdef SPbootstrapClass
             ylabel('Counts')
             xlim([0,inf])
             l = legend([h.histogram,h.plot],'Bootstrap','Original',...
-                'Location','NorthEast');
+                'Location','NorthWest');
         end
     end
 end
