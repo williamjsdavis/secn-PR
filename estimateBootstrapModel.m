@@ -241,7 +241,7 @@ function bootstrapData = makeBootstrapSample(observationData,drawFunction)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Processing
 cellData = arrayfun(@(n) observationData.dataCell{n}(drawFunction{n}()),...
-    1:2,'UniformOutput',false);
+    1:observationData.dataNumber,'UniformOutput',false);
 
 % Making object
 bootstrapData = ObservationClass(observationData.timeStep,cellData);
