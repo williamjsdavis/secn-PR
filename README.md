@@ -119,7 +119,7 @@ This workflow is streamlined in the `fullSPestimate()` function, see `exampleScr
 - [ ] Implement arbitrary spatial evaluation points
 - [ ] Add compatibility for combining observations of different time-steps
 - [ ] Add compatibility for observations of uneven time-steps
-- [ ] Make a plotting function for the distribution of correlation times
+- [x] Make a plotting function for the distribution of correlation times
 - [ ] Add more kernel functions to the library
 
 # Changelog
