@@ -11,8 +11,8 @@ function [observationA,observationB,trueModel] = importExampleData
 %   - 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Observations
-observationA = importdata('./exampleDataA.dat'); % Observation A
-observationB = importdata('./exampleDataB.dat'); % Observation B
+observationA = importdata('./exampleDataA.txt'); % Observation A
+observationB = importdata('./exampleDataB.txt'); % Observation B
 
 %% True parameters used in calculations
 trueModel.dt = 0.005; % Time-step
