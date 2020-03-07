@@ -342,16 +342,20 @@ function [lambda1,lambda2] = lambdaSearchLinear(M1,M2,r_matrix)
 %   - Use original tau_max or second tau_max?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Loop over requested x points
-nx_points = size(M1,2); % Number of x points
+% nx_points = size(M1,2); % Number of x points
 
-lambda1 = zeros(3,nx_points); % Preallocating lambda^(1) array
-lambda2 = zeros(3,nx_points); % Preallocating lambda^(2) array
+% lambda1 = zeros(3,nx_points); % Preallocating lambda^(1) array
+% lambda2 = zeros(3,nx_points); % Preallocating lambda^(2) array
+% for ii = 1:nx_points
+%     % Minimising normal matrix
+%     lambda1(:,ii) = r_matrix\M1(:,ii); 
+%     lambda2(:,ii) = r_matrix\M2(:,ii);
+% end
 
-for ii = 1:nx_points
-    % Minimising normal matrix
-    lambda1(:,ii) = r_matrix\M1(:,ii); 
-    lambda2(:,ii) = r_matrix\M2(:,ii);
-end
+%% Solve linear equations
+lambda1 = r_matrix\M1;
+lambda2 = r_matrix\M2;
+
 end
 function [fNew,gNew] = fixedPointIter(lambda1_1,lambda2_1,f,g,theta,...
     Xcentre)
