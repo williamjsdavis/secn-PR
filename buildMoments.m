@@ -61,6 +61,7 @@ function [Xcentre,M1,M2] = nKBR_moments_fast(X,tauIn,Npoints,xLims,bandwidth)
 %   Problems:
 %   - Tidy up
 %   - Implement other kernels
+%   - Remove yinc{nd} nd indexing?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Processing
 dX = (xLims(2)-xLims(1))/(Npoints-1); % Bins increment
