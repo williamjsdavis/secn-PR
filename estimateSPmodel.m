@@ -353,6 +353,7 @@ function [lambda1,lambda2] = lambdaSearchLinear(M1,M2,r_matrix)
 % end
 
 %% Solve linear equations
+% inv(r_matrix'*r_matrix)*r_matrix'*M1
 lambda1 = r_matrix\M1;
 lambda2 = r_matrix\M2;
 
