@@ -46,7 +46,7 @@ figure,momentDataAB.plotMoment1()
 <img src="/figures/example_figure03.png" height="400"/>
 
 ### Estimate stochastic process
-From the conditional moments, the correlation time and drift and noise functions of the stochastic process can be estimated using the `estimateSPmodel()` function. Options for the calculations are in the `FitOptionsClass` class definition.
+From the conditional moments, the correlation time and drift and noise functions of the stochastic process can be estimated using the `estimateSPmodel()` function. Options for the calculations are in the `FitOptionsClass` class definition. For example, `fixThetaValue` allows for setting the correlation time to a particular value rather than solving for it.
 
 ```MATLAB
 % Setting options (no arguments => default)
@@ -117,8 +117,8 @@ This workflow is streamlined in the `fullSPestimate()` function, see `exampleScr
 
 - [ ] Implement arbitrary `timeShiftSamplePoints` vector
 - [ ] Implement arbitrary spatial evaluation points
+- [x] Implement option of forcing a particular correlation time
 - [ ] Add compatibility for combining observations of different time-steps
-- [ ] Add compatibility for observations of uneven time-steps
 - [x] Make a plotting function for the distribution of correlation times
 - [ ] Add more kernel functions to the library
 
