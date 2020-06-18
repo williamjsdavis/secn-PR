@@ -14,6 +14,8 @@ observationDataAB = buildObservation(trueModel.dt,...
 % Options
 momentOptions = MomentOptionsClass(1:15,25,[-1,1],0.1);
 fitOptions = FitOptionsClass();
+fitOptions.fixTheta = true;
+fitOptions.fixThetaValue = 0.01;
 bootstrapOptions = BootstrapOptionsClass(100);
 
 % Run full estimation

@@ -15,6 +15,8 @@ function outSPmodelObject = estimateSPmodel(momentData,fitOptions)
 %   - "fitOptions"              Options, FitOptionsClass
 %       - "thetaConvergence"    Iteration error limit for theta, double
 %       - "functionConvergence" Same for drift and noise functions, double
+%       - "fixTheta"            Set theta value? logical
+%       - "fixThetaValue"       Value of fixed theta, double
 %       - "keepObservations"    Keep observationData? logical
 %       - "printOutput"         Print to command window? logical
 %
@@ -23,16 +25,8 @@ function outSPmodelObject = estimateSPmodel(momentData,fitOptions)
 %   - Alter theta_search.m to give rMatrix for vector above...
 %   - Removed possible change in lambda_tau_choice. Investigate further.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Estimate correlation time (theta)
-% Maximum correlation time
-maximumLag = max(momentData.momentOptions.timeShiftSamplePoints);
-maximumTheta = maximumLag*momentData.observationData.timeStep;
-
-% Estimate correlation time
-[thetaStar,thetaProperties] = theta_search(...
-    momentData.observationData.dataCell,...
-    momentData.observationData.timeStep,maximumLag,maximumTheta,...
-    fitOptions.thetaConvergence);
+%% Get or estimate correlation time (theta)
+[thetaStar,thetaProperties] = getTheta(momentData,fitOptions);
 
 %% Estimate drift and noise functional form
 % Estimation of lambda vector (linearised)
@@ -90,6 +84,70 @@ if printOutput
         sprintf('%0.4e',meanAbsoluteError.bothMoments)])
 end
 end
+function [thetaStar,thetaProperties] = getTheta(momentData,fitOptions)
+%Get theta value
+%   William Davis, 18/06/20
+%
+%   Notes:
+%   Determine whether to search for theta or use set value.
+%
+%   Inputs:
+%   - "momentData"              Moment data object, MomentClass
+%   - "fitOptions"              Options, FitOptionsClass
+%
+%   Problems:
+%   - 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Maximum lag is set for fixed theta case
+maximumLag = max(momentData.momentOptions.timeShiftSamplePoints);
+
+if fitOptions.fixTheta % Get fixed theta
+    [thetaStar,thetaProperties] = theta_chosen(...
+        momentData.observationData.dataCell,...
+        momentData.observationData.timeStep,maximumLag,fitOptions);
+    
+else % Search for theta
+    maximumTheta = maximumLag*momentData.observationData.timeStep;
+    [thetaStar,thetaProperties] = theta_search(...
+        momentData.observationData.dataCell,...
+        momentData.observationData.timeStep,maximumLag,maximumTheta,...
+        fitOptions.thetaConvergence);
+end
+end
+function [thetaStar,thetaProperties] = theta_chosen(X,dt,nuMax,fitOptions)
+%
+%   William Davis, 18/06/20
+%
+%   Notes:
+%   Get set theta value and relevant properties.
+%
+%   Inputs:
+%   - "X"                       Observed variable, cell array of data
+%   - "dt"                      Time-step
+%   - "nuMax"                   Index of maximum time-shift
+%   - "thetaMax"                Maximum correlation time in search
+%   - "fitOptions"              Options, FitOptionsClass
+%
+%   Problems:
+%   - 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Get set theta value
+thetaStar = fitOptions.fixThetaValue;
+
+% Autocorrelation
+dA = nAutocorrIncrement(X,nuMax); % Multiple data
+
+% R matrix and lambda vector
+rNuMatrix = formRmatrix(dt,nuMax);
+rMatrix = rNuMatrix(thetaStar); % Output r(tau,theta) matrix
+lambdaStar = rMatrix\dA; 
+
+%% Outputs
+thetaProperties.newNuMax = nuMax;
+thetaProperties.rMatrix = rMatrix;
+thetaProperties.dA = dA;
+thetaProperties.lambdaStar = lambdaStar;
+end
 function [thetaStarNew,thetaProperties] = theta_search(X,dt,nuMax,...
     thetaMax,betaConv)
 %Theta search
@@ -110,13 +168,12 @@ function [thetaStarNew,thetaProperties] = theta_search(X,dt,nuMax,...
 %   Inputs:
 %   - "X"                       Observed variable, cell array of data
 %   - "dt"                      Time-step
-%   - "nu_max"                  Index of maximum time-shift
-%   - "theta_max"               Maximum correlation time in search
-%   - "beta_conv"               Convergence parameter (not used yet)
+%   - "nuMax"                   Index of maximum time-shift
+%   - "thetaMax"                Maximum correlation time in search
+%   - "betaConv"                Convergence parameter (not used yet)
 %
 %   Problems:
 %   - See note on nu correction.
-%   - Tidy up
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Processing
 % Autocorrelation
@@ -143,9 +200,7 @@ if newNuMax > nuMax
     % minimum. This may need further investigation.
     
     newNuMax = nuMax;
-    
     dA = nAutocorrIncrement(X,newNuMax);
-    
 end
 
 % Second search
@@ -198,7 +253,7 @@ function acf = myAutocorr(x,lags)
 %   William Davis, 30/01/20
 %
 %   Notes:
-%   Calculate autocorrelation function.
+%   Reduces dependency on Signal Processing Toolbox.
 %   
 %   Inputs:
 %
@@ -225,32 +280,19 @@ function [thetaStar,rNuMatrix,lambdaStar] = thetaBasisFunctionFit(dA,dt,...
 %   process. Fits autocorrelation to basis functions to find optimal theta.
 %   Assumes all tau from 1 to tau_max will be used in search.
 %   
-%
 %   Inputs:
 %   - "dA"                      Autocorrelation increments
 %   - "dt"                      Time-step
-%   - "nu_max"                  Index of maximum time-shift
-%   - "theta_max"               Maximum correlation time in search
-%   - "beta_conv"               Convergence parameter (not used)
+%   - "nuMax"                   Index of maximum time-shift
+%   - "thetaMax"                Maximum correlation time in search
+%   - "betaConv"                Convergence parameter (not used)
 %
 %   Problems:
 %   - 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Processing
-nu = 1:nuMax; % Indexes of time-shifts
-tau_nu = nu'*dt; % Array of time-shifts
-
-% Basis functions
-r1 = @(tau,theta) tau - theta*(1 - exp(-tau/theta));
-r2 = @(tau,theta) tau.^2/2 - theta*r1(tau,theta);
-r3 = @(tau,theta) tau.^3/6 - theta*r2(tau,theta);
-rArray = @(tau,theta) [r1(tau,theta),r2(tau,theta),r3(tau,theta)];
-
-% Functions r matrix (reducing dependencies, new method)
-rNuMatrix = @(theta) rArray(tau_nu,theta);
-
 %% Searching for theta
-% Objective function
+% Objective function from matrix
+rNuMatrix = formRmatrix(dt,nuMax);
 lambdaFunc = @(theta_c) rNuMatrix(theta_c)\dA;
 funcValue = @(theta_c) sum((dA-rNuMatrix(theta_c)*lambdaFunc(theta_c)).^2);
 
@@ -259,6 +301,31 @@ thetaStar = fminbnd(funcValue,0,thetaMax);
 
 % Best fit lambda vector
 lambdaStar = lambdaFunc(thetaStar);
+end
+function rNuMatrix = formRmatrix(dt,nuMax)
+%Form R matrix
+%   William Davis, 18/06/20
+%
+%   Notes:
+%   Recursive formation.
+%
+%   Inputs:
+%   - "dt"                      Time-step
+%   - "nuMax"                   Index of maximum time-shift
+%
+%   Problems:
+%   - 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Basis functions
+r1 = @(tau,theta) tau - theta*(1 - exp(-tau/theta));
+r2 = @(tau,theta) tau.^2/2 - theta*r1(tau,theta);
+r3 = @(tau,theta) tau.^3/6 - theta*r2(tau,theta);
+rArray = @(tau,theta) [r1(tau,theta),r2(tau,theta),r3(tau,theta)];
+
+% Functions r matrix (reducing dependencies, new method)
+nu = 1:nuMax; % Indexes of time-shifts
+tau_nu = nu'*dt; % Array of time-shifts
+rNuMatrix = @(theta) rArray(tau_nu,theta);
 end
 function [fNew,gNew,f0,g0] = fgIter(lambda1_1,lambda2_1,theta,Xcentre,betaConv)
 %Iterate functions f and g

@@ -12,7 +12,6 @@ observationDataAB = buildObservation(trueModel.dt,...
 figure,observationDataAB.plotObservation();
 
 %% Make moment matrices
-
 % Setting options (timeShiftSamplePoints,nEvalPoints,evalLims,bandwidth)
 momentOptions = MomentOptionsClass(1:60,20,[-1,1],0.1);
 
@@ -26,7 +25,6 @@ momentDataAB = buildMoments(observationDataAB,momentOptions);
 figure,momentDataAB.plotMoment1()
 
 %% Fitting to functions
-
 % Setting options (no arguments => default)
 fitOptions = FitOptionsClass();
 
@@ -52,7 +50,6 @@ h.model = plot(SPmodelAB.momentData.evalPoints,...
 legend([h.scatter,h.model],{'Data','True model'},'Location','NorthWest')
 
 %% Bootstrapping uncertainties
-
 % Setting options (nBootstrapSamples)
 bootstrapOptions = BootstrapOptionsClass(20);
 
