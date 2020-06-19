@@ -70,7 +70,8 @@ classdef SPbootstrapClass
             %%%Plot correlation time and bootstraps for visual inspection
             % Make figure
             hold on,box on
-            h.histogram = histogram(obj.distributions.correlationEstimate);
+            h.histogram = histogram(...
+                obj.distributions.correlationEstimate,10);
             h.plot = plot(obj.SPmodel.correlationEstimate*ones(2,1),...
                 ylim,'r-','LineWidth',2);
             title('Correlation time and bootstrap results')
