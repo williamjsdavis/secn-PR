@@ -2,7 +2,7 @@
 % William Davis, 17/01/20
 % Illustrating how to use the secPR package
 clearvars,clc,close all
-
+addpath('../src/')
 %% Import data and true model
 [observationVectorA,observationVectorB,trueModel] = importExampleData();
 
