@@ -124,6 +124,7 @@ This workflow is streamlined in the `fullSPestimate()` function, see `exampleScr
 
 # Changelog
 
+- Version 1.0 - First official release
 - Version 0.9 - Introduced version I used for my research.
 
 # References
