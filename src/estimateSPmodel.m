@@ -104,7 +104,9 @@ maximumLag = max(momentData.momentOptions.timeShiftSamplePoints);
 if fitOptions.fixTheta % Get fixed theta
     [thetaStar,thetaProperties] = theta_chosen(...
         momentData.observationData.dataCell,...
-        momentData.observationData.timeStep,maximumLag,fitOptions);
+        momentData.observationData.timeStep,...
+        momentData.momentOptions.timeShiftSamplePoints,...
+        fitOptions);
     
 else % Search for theta
     maximumTheta = maximumLag*momentData.observationData.timeStep;
@@ -114,7 +116,8 @@ else % Search for theta
         fitOptions.thetaConvergence);
 end
 end
-function [thetaStar,thetaProperties] = theta_chosen(X,dt,nuMax,fitOptions)
+function [thetaStar,thetaProperties] = theta_chosen(X,dt,...
+                timeShiftSamplePoints,fitOptions)
 %
 %   William Davis, 18/06/20
 %
@@ -135,16 +138,23 @@ function [thetaStar,thetaProperties] = theta_chosen(X,dt,nuMax,fitOptions)
 thetaStar = fitOptions.fixThetaValue;
 
 % Autocorrelation
+nuMax = max(timeShiftSamplePoints);
 dA = nAutocorrIncrement(X,nuMax); % Multiple data
+dA = dA(timeShiftSamplePoints);
 
 % R matrix and lambda vector
-rNuMatrix = formRmatrix(dt,nuMax);
+rNuMatrix = formRmatrix(dt,timeShiftSamplePoints);
 rMatrix = rNuMatrix(thetaStar); % Output r(tau,theta) matrix
 lambdaStar = rMatrix\dA; 
+
+% Full matrix
+rNuMatrixFull = formRmatrix(dt,1:nuMax);
+rMatrixFull = rNuMatrixFull(thetaStar);
 
 %% Outputs
 thetaProperties.newNuMax = nuMax;
 thetaProperties.rMatrix = rMatrix;
+thetaProperties.rMatrixFull = rMatrixFull;
 thetaProperties.dA = dA;
 thetaProperties.lambdaStar = lambdaStar;
 end
@@ -302,7 +312,7 @@ thetaStar = fminbnd(funcValue,0,thetaMax);
 % Best fit lambda vector
 lambdaStar = lambdaFunc(thetaStar);
 end
-function rNuMatrix = formRmatrix(dt,nuMax)
+function rNuMatrix = formRmatrix(dt,timeShiftSamplePoints)
 %Form R matrix
 %   William Davis, 18/06/20
 %
@@ -323,7 +333,7 @@ r3 = @(tau,theta) tau.^3/6 - theta*r2(tau,theta);
 rArray = @(tau,theta) [r1(tau,theta),r2(tau,theta),r3(tau,theta)];
 
 % Functions r matrix (reducing dependencies, new method)
-nu = 1:nuMax; % Indexes of time-shifts
+nu = timeShiftSamplePoints; % Indexes of time-shifts
 tau_nu = nu'*dt; % Array of time-shifts
 rNuMatrix = @(theta) rArray(tau_nu,theta);
 end
