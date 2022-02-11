@@ -112,7 +112,9 @@ else % Search for theta
     maximumTheta = maximumLag*momentData.observationData.timeStep;
     [thetaStar,thetaProperties] = theta_search(...
         momentData.observationData.dataCell,...
-        momentData.observationData.timeStep,maximumLag,maximumTheta,...
+        momentData.observationData.timeStep,...
+        momentData.momentOptions.timeShiftSamplePoints,...
+        maximumTheta,...
         fitOptions.thetaConvergence);
 end
 end
@@ -158,8 +160,8 @@ thetaProperties.rMatrixFull = rMatrixFull;
 thetaProperties.dA = dA;
 thetaProperties.lambdaStar = lambdaStar;
 end
-function [thetaStarNew,thetaProperties] = theta_search(X,dt,nuMax,...
-    thetaMax,betaConv)
+function [thetaStarNew,thetaProperties] = theta_search(X,dt,...
+    timeShiftSamplePoints,thetaMax,betaConv)
 %Theta search
 %   William Davis, 13/01/19
 %
@@ -187,10 +189,12 @@ function [thetaStarNew,thetaProperties] = theta_search(X,dt,nuMax,...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Processing
 % Autocorrelation
+nuMax = max(timeShiftSamplePoints);
 dA = nAutocorrIncrement(X,nuMax); % Multiple data
 
 % First search
-[thetaStarInitial,rNuMatrix,~] = thetaBasisFunctionFit(dA,dt,nuMax,...
+[thetaStarInitial,rNuMatrix,~] = thetaBasisFunctionFit(dA,dt,...
+    timeShiftSamplePoints,...
     thetaMax,betaConv);
 
 % New maximum tau
@@ -213,10 +217,15 @@ if newNuMax > nuMax
     dA = nAutocorrIncrement(X,newNuMax);
 end
 
+% New nu max
+timeShiftSamplePointsNew = ...
+        timeShiftSamplePoints(timeShiftSamplePoints <= newNuMax);
+    dA = dA(timeShiftSamplePointsNew);
+
 % Second search
 newThetaMax = newNuMax*dt; % New theta maximum
 [thetaStarNew,~,lambdaStar] = thetaBasisFunctionFit(dA(1:newNuMax),dt,...
-    newNuMax,newThetaMax,betaConv);
+    timeShiftSamplePointsNew,newThetaMax,betaConv);
 
 % R matrix
 rMatrix = rNuMatrix(thetaStarNew); % Output r(tau,theta) matrix
@@ -224,6 +233,7 @@ rMatrix = rNuMatrix(thetaStarNew); % Output r(tau,theta) matrix
 %% Outputs
 thetaProperties.newNuMax = newNuMax;
 thetaProperties.rMatrix = rMatrix;
+thetaProperties.rMatrixFull = rMatrix;
 thetaProperties.dA = dA;
 thetaProperties.lambdaStar = lambdaStar;
 end
@@ -281,7 +291,7 @@ acf = real(acf);
 acf = acf./acf(1);
 end
 function [thetaStar,rNuMatrix,lambdaStar] = thetaBasisFunctionFit(dA,dt,...
-    nuMax,thetaMax,betaConv)
+    timeShiftSamplePoints,thetaMax,betaConv)
 %Theta basis function fit
 %   William Davis, 12/01/19
 %
@@ -302,7 +312,7 @@ function [thetaStar,rNuMatrix,lambdaStar] = thetaBasisFunctionFit(dA,dt,...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Searching for theta
 % Objective function from matrix
-rNuMatrix = formRmatrix(dt,nuMax);
+rNuMatrix = formRmatrix(dt,timeShiftSamplePoints);
 lambdaFunc = @(theta_c) rNuMatrix(theta_c)\dA;
 funcValue = @(theta_c) sum((dA-rNuMatrix(theta_c)*lambdaFunc(theta_c)).^2);
 
