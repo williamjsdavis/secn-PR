@@ -32,7 +32,7 @@ function outSPmodelObject = estimateSPmodel(momentData,fitOptions)
 % Estimation of lambda vector (linearised)
 [lambdaProperties.lambda1Star,lambdaProperties.lambda2Star] = ...
     lambdaSearchLinear(momentData.moment1Matrix,...
-    momentData.moment2Matrix,thetaProperties.rMatrix);
+    momentData.moment2Matrix,thetaProperties.rMatrixFull);
 
 % Estimate functions f and g (drift and noise)
 lambda1_1 = lambdaProperties.lambda1Star(1,:); % Array of lambda^(1)_1
@@ -67,9 +67,9 @@ function meanAbsoluteError = meanFitError(momentData,thetaProperties,...
 %   - Add option to surpress print to terminal
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 moment1Difference = momentData.moment1Matrix-...
-    thetaProperties.rMatrix*lambdaProperties.lambda1Star;
+    thetaProperties.rMatrixFull*lambdaProperties.lambda1Star;
 moment2Difference = momentData.moment2Matrix-...
-    thetaProperties.rMatrix*lambdaProperties.lambda2Star;
+    thetaProperties.rMatrixFull*lambdaProperties.lambda2Star;
 meanAbsoluteError.moment1 = mean(abs(moment1Difference(:)));
 meanAbsoluteError.moment2 = mean(abs(moment2Difference(:)));
 meanAbsoluteError.bothMoments = mean([meanAbsoluteError.moment1,...
@@ -220,21 +220,23 @@ end
 % New nu max
 timeShiftSamplePointsNew = ...
         timeShiftSamplePoints(timeShiftSamplePoints <= newNuMax);
-    dA = dA(timeShiftSamplePointsNew);
+dANew = dA(timeShiftSamplePointsNew);
 
 % Second search
 newThetaMax = newNuMax*dt; % New theta maximum
-[thetaStarNew,~,lambdaStar] = thetaBasisFunctionFit(dA(1:newNuMax),dt,...
-    timeShiftSamplePointsNew,newThetaMax,betaConv);
+[thetaStarNew,rNuMatrixNew,lambdaStar] = thetaBasisFunctionFit(...
+    dANew,dt,timeShiftSamplePointsNew,newThetaMax,betaConv);
 
 % R matrix
-rMatrix = rNuMatrix(thetaStarNew); % Output r(tau,theta) matrix
+rMatrixFull = rNuMatrix(thetaStarNew); % Output r(tau,theta) matrix
+rMatrix = rNuMatrixNew(thetaStarNew);
 
 %% Outputs
 thetaProperties.newNuMax = newNuMax;
 thetaProperties.rMatrix = rMatrix;
-thetaProperties.rMatrixFull = rMatrix;
-thetaProperties.dA = dA;
+thetaProperties.rMatrixFull = rMatrixFull;
+thetaProperties.dA = dANew;
+thetaProperties.dAFull = dA;
 thetaProperties.lambdaStar = lambdaStar;
 end
 function [dA_full] = nAutocorrIncrement(X,tauMax)
@@ -347,7 +349,7 @@ nu = timeShiftSamplePoints; % Indexes of time-shifts
 tau_nu = nu'*dt; % Array of time-shifts
 rNuMatrix = @(theta) rArray(tau_nu,theta);
 end
-function [fNew,gNew,f0,g0] = fgIter(lambda1_1,lambda2_1,theta,Xcentre,betaConv)
+function [f_new,g_new,f0,g0] = fgIter(lambda1_1,lambda2_1,theta,Xcentre,betaConv)
 %Iterate functions f and g
 %   William Davis, 14/01/19
 %
@@ -369,20 +371,20 @@ function [fNew,gNew,f0,g0] = fgIter(lambda1_1,lambda2_1,theta,Xcentre,betaConv)
 %   - Write better convergence algorithm?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Settings
-count_max = 1; % Iteration limits
+count_max = 20; % Iteration limits
 
 %% Processing
 % Starting values
 f0 = lambda1_1; % Drift function
 g0 = sqrt(abs(lambda2_1)); % Noise function
-fNew = f0;
-gNew = g0;
+f_new = f0;
+g_new = g0;
 
 % Plotting for for debugging purposes
 %figure(1),hold on
-%plot(Xcentre,f_0,'k-','LineWidth',2),xlabel('X'),ylabel('f')
+%plot(Xcentre,f0,'k-','LineWidth',2),xlabel('X'),ylabel('f')
 %figure(2),hold on
-%plot(Xcentre,g_0,'k-','LineWidth',2),xlabel('X'),ylabel('f')
+%plot(Xcentre,g0,'k-','LineWidth',2),xlabel('X'),ylabel('f')
 
 % Iterate until converged
 count = 0; % Initial count
@@ -392,20 +394,20 @@ while (int_err > betaConv) && (count < count_max)
     count = count + 1; 
     
     % Update functions
-    f_old = fNew; 
-    g_old = gNew;
+    f_old = f_new; 
+    g_old = g_new;
     
     % Find new values
-    [fNew,gNew] = fixedPointIter(lambda1_1,lambda2_1,f_old,g_old,theta,...
+    [f_new,g_new] = fixedPointIter(lambda1_1,lambda2_1,f_old,g_old,theta,...
         Xcentre);
     
     % Integration error
-    int_err = trapz(Xcentre,(fNew-f_old).^2) + ...
-        trapz(Xcentre,(gNew-g_old).^2);
+    int_err = trapz(Xcentre,(f_new-f_old).^2) + ...
+        trapz(Xcentre,(g_new-g_old).^2);
     
     % Plotting for for debugging purposes
-    %figure(1),plot(Xcentre,f_new),
-    %figure(2),plot(Xcentre,g_new)
+    %figure(1),plot(Xcentre,f_new,'LineWidth',2)
+    %figure(2),plot(Xcentre,g_new,'LineWidth',2)
     
 end
 
